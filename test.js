@@ -30,19 +30,6 @@ STAGES.melee_weapon_target = {
 
 const BACK_EMOJI = "\u{1f519}";
 
-/*
-const AVRAE_PINNED_MESSAGE = "```" +
-`Current initiative: 9 (round 2)
-===============================
-  12: Katar <8/8 HP> (AC 13)
-  10: Minotaur <Injured>
-#  9: Stead Turalo <12/12 HP> (AC 14)
-   8: Charic <10/10 HP> (AC 14)
-   4: Rootz <10/10 HP> (AC 16)
-   2: Arjshedinn <12/12 HP> (AC 18)` +
-"```"
-*/
-
 const incomingMessage = {id: 1, author: {id: 1}}
 let i;
 const makeReaction = (emoji_letter) => {

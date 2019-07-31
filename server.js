@@ -145,11 +145,15 @@ const parseBeyond = (sheet) => {
             }
         })
     }
-    let spells = [];
+    let spells = {area: [], target: []};
     if (sheet.classSpells) {
         sheet.classSpells.forEach((cs) => {
             cs.spells.forEach((s) => {
-                spells.push(s.definition.name);
+                if (s.definition.range && s.definition.range.aoeType) {
+                    spells.area.push(s.definition.name);
+                } else {
+                    spells.target.push(s.definition.name);
+                }
             })
         });
     }

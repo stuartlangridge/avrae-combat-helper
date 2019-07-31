@@ -41,6 +41,51 @@ let STAGES = {
         description: "Copy and paste the command below",
         summary: "Opportunity attack with {weapon} on {target} by {combatant}",
         avrae: '!init aoo {combatant} {target} {weapon}'
+    },
+    target: {
+        description: "Choose a spell: {targetspelllist}",
+        summary: "Cast a spell",
+        next_stage: "target_spell",
+        store_as: "spell"
+    },
+    target_spell: {
+        description: "Choose target {targetlist}",
+        summary: "Cast _{spell}_",
+        next_stage: "target_spell_target",
+        store_as: "target"
+    },
+    target_spell_target: {
+        description: "Copy and paste the command below",
+        summary: "Cast _{spell}_ at {target}",
+        avrae: '!init cast {spell} -t {target}'
+    },
+    area: {
+        description: "Choose a spell: {areaspelllist}",
+        summary: "Cast a spell",
+        next_stage: "area_spell",
+        store_as: "spell"
+    },
+    area_spell: {
+        description: "Copy and paste the command below",
+        summary: "Cast _{spell}_",
+        avrae: '!init cast {spell}'
+    },
+    reaction: {
+        description: "Choose a spell: {targetspelllist}",
+        summary: "Cast a spell as a reaction",
+        next_stage: "reaction_spell",
+        store_as: "spell"
+    },
+    reaction_spell: {
+        description: "Choose target {targetlist}",
+        summary: "Cast _{spell}_ as a reaction",
+        next_stage: "reaction_spell_target",
+        store_as: "target"
+    },
+    reaction_spell_target: {
+        description: "Copy and paste the command below",
+        summary: "Cast _{spell}_ at {target} as a reaction",
+        avrae: '!init reactcast {target} {spell}'
     }
 }
 const BACK_EMOJI = "\u{1f519}";
@@ -169,8 +214,11 @@ class Interaction {
         this._response_message = null;
         this.characterDetails = characterDetails;
     }
-    get spelllist() {
-        return this.characterDetails.spells.map((s) => `[${s}]`).join(", ");
+    get targetspelllist() {
+        return this.characterDetails.spells.target.map((s) => `[${s}]`).join(", ");
+    }
+    get areaspelllist() {
+        return this.characterDetails.spells.area.map((s) => `[${s}]`).join(", ");
     }
     get attacklist() {
         return this.characterDetails.attacks.map((s) => `[${s}]`).join(", ");
@@ -179,7 +227,7 @@ class Interaction {
         return this.characterDetails.targets.map((s) => `[${s}]`).join(", ");
     }
     get listnames() {
-        return ["spelllist", "attacklist", "targetlist"];
+        return ["targetspelllist", "areaspelllist", "attacklist", "targetlist"];
     }
     get full_message() {
         let s = this.summary;
