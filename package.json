@@ -1,0 +1,17 @@
+{
+  "name": "avrae-combat-helper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --require spec-helper.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^11.5.1"
+  },
+  "devDependencies": {
+    "mocha": "^6.2.0"
+  }
+}
