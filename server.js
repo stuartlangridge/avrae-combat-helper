@@ -78,30 +78,37 @@ const setDiscordToken = async (userid, details) => {
     DISCORD_TOKENS[userid] = details;
 }
 
-const server = http.createServer(async (request, response) => {
-    let u = url.parse(request.url)
-    if (u.query && u.query.startsWith("code=")) {
-        let code = u.query.split("=")[1];
-        let token_details = await exchangeCode(code);
-        let expires_at = new Date().getTime() + (token_details.expires_in * 1000);
-        // now look up the user
-        let user_details = await queryDiscordMe(token_details.access_token);
-        let details = {
-            refresh_token: token_details.refresh_token,
-            access_token: token_details.access_token,
-            expires_at: expires_at
+const startServer = (userRegisteredCallback) => {
+    const server = http.createServer(async (request, response) => {
+        let u = url.parse(request.url)
+        if (u.query && u.query.startsWith("code=")) {
+            let code = u.query.split("=")[1];
+            let token_details = await exchangeCode(code);
+            let expires_at = new Date().getTime() + (token_details.expires_in * 1000);
+            // now look up the user
+            let user_details = await queryDiscordMe(token_details.access_token);
+            let details = {
+                refresh_token: token_details.refresh_token,
+                access_token: token_details.access_token,
+                expires_at: expires_at
+            }
+            details = Object.assign(details, user_details);
+            setDiscordToken(user_details.id, details)
+            userRegisteredCallback(user_details.id);
         }
-        details = Object.assign(details, user_details);
-        setDiscordToken(user_details.id, details)
-    }
-    response.end('Hello Node.js Server!')
-})
+        response.end('Thank you for registering with Avrae Combat Help. You can close this tab now.');
+    })
+    server.listen(41174, (err) => {
+        if (err) { console.log('something bad happened', err); return; }
+        console.log("server is listening");
+    })
+}
 
 const reallyGetDiscordToken = async (userid) => {
     return DISCORD_TOKENS[userid] ? DISCORD_TOKENS[userid].access_token : null
 }
 
-const getDiscordTokenRepeatedly = async (userid, first) => {
+const getDiscordTokenRepeatedly = async (userid, notifyUserCallback, first) => {
     let token = await reallyGetDiscordToken(userid);
     if (token) {
         return token;
@@ -109,7 +116,7 @@ const getDiscordTokenRepeatedly = async (userid, first) => {
 
     // now prompt the user to click the link
     if (first) {
-        console.log("Click this link: https://discordapp.com/api/oauth2/authorize?client_id=605711472152281098&redirect_uri=http%3A%2F%2Flocalhost%3A41174&response_type=code&scope=identify")
+        notifyUserCallback(userid, "https://discordapp.com/api/oauth2/authorize?client_id=605711472152281098&redirect_uri=http%3A%2F%2Flocalhost%3A41174&response_type=code&scope=identify");
     }
 
     await new Promise((resolve) => { setTimeout(resolve, 1000); })
@@ -117,7 +124,7 @@ const getDiscordTokenRepeatedly = async (userid, first) => {
         console.log("Stopping getDiscordTokenRepeatedly for", userid);
         return false;
     }
-    return await getDiscordTokenRepeatedly(userid, false);
+    return await getDiscordTokenRepeatedly(userid, notifyUserCallback, false);
 }
 
 const parseBeyond = (sheet) => {
@@ -181,8 +188,8 @@ const getSheet = async (character) => {
     return null;
 }
 
-const reallyGetUserDetails = async (userid) => {
-    let user_discord_token = await getDiscordTokenRepeatedly(userid, true);
+const reallyGetUserDetails = async (userid, notifyUserCallback) => {
+    let user_discord_token = await getDiscordTokenRepeatedly(userid, notifyUserCallback, true);
     if (user_discord_token === false) {
         // token fetch was stopped.
         return false
@@ -195,13 +202,13 @@ const reallyGetUserDetails = async (userid) => {
     return sheet;
 }
 
-const getUserDetails = async (userid) => {
+const getUserDetails = async (userid, notifyUserCallback) => {
     let timeout;
     STOPPERS[userid] = "go";
     let timer = new Promise((resolve) => { timeout = setTimeout(() => { resolve(null); }, 30000); })
 
     // async but no await because we await it next
-    let fetcher = reallyGetUserDetails(userid);
+    let fetcher = reallyGetUserDetails(userid, notifyUserCallback);
 
     let result = await Promise.race([timer, fetcher]);
     // one of the promises finished, but the other one is still running, so kill them both
@@ -217,9 +224,4 @@ const getUserDetails = async (userid) => {
     return result;
 }
 
-module.exports = {getUserDetails}
-
-server.listen(41174, (err) => {
-    if (err) { console.log('something bad happened', err); return; }
-    console.log("server is listening");
-})
+module.exports = {getUserDetails, startServer}

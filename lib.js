@@ -1,6 +1,6 @@
 let STAGES = {
     start: {
-        description: "Make an attack ([melee] or [opportunity]) or cast a spell (at a [target] or as a [reaction])"
+        description: "Make an attack ([melee] or [opportunity]) or cast a spell (at an [area], a [target], or as a [reaction])"
     },
     melee: {
         description: "Choose weapon {attacklist}",
@@ -17,7 +17,30 @@ let STAGES = {
     melee_weapon_target: {
         description: "Copy and paste the command below",
         summary: "Melee attack with {weapon} on {target}",
-        avrae: '!init attack "{target}" "{weapon}"'
+        avrae: '!init attack {target} {weapon}'
+    },
+    opportunity: {
+        description: "Choose weapon {attacklist}",
+        summary: "Opportunity attack",
+        next_stage: "opportunity_weapon",
+        store_as: "weapon"
+    },
+    opportunity_weapon: {
+        description: "Choose target {targetlist}",
+        summary: "Opportunity attack with {weapon}",
+        next_stage: "opportunity_weapon_target",
+        store_as: "target"
+    },
+    opportunity_weapon_target: {
+        description: "Choose combatant (who is doing the attack) {targetlist}",
+        summary: "Opportunity attack with {weapon} on {target}",
+        next_stage: "opportunity_weapon_target_combatant",
+        store_as: "combatant"
+    },
+    opportunity_weapon_target_combatant: {
+        description: "Copy and paste the command below",
+        summary: "Opportunity attack with {weapon} on {target} by {combatant}",
+        avrae: '!init aoo {combatant} {target} {weapon}'
     }
 }
 const BACK_EMOJI = "\u{1f519}";
@@ -60,7 +83,11 @@ class Step {
         let text = STAGES[this.stage][prop];
         if (!text) return "";
         for (let k in this.stored) {
-            text = text.replace("{" + k + "}", this.stored[k])
+            let value = this.stored[k];
+            if (value.indexOf(" ") > -1) {
+                value = '"' + value + '"';
+            }
+            text = text.replace("{" + k + "}", value)
         }
         return text;
     }
