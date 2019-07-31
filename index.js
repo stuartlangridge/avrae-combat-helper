@@ -46,7 +46,7 @@ const notifyUserCallback = async (userid, link) => {
     console.log("tell user id", userid, "the message", link);
     let user = await client.fetchUser(userid);
     let dmchannel = await user.createDM();
-    dmchannel.send(`Hi! Since this is your first time using Avrae Combat Help, you need to register. Please click on ${link} to do so.`)
+    dmchannel.send(`Hi! Since this is your first time using Avrae Combat Help, you need to register. Please click on <${link}> to do so.`)
 }
 
 client.on("ready", () => { console.log("startup!"); });

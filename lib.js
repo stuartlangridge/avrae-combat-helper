@@ -44,6 +44,7 @@ let STAGES = {
     }
 }
 const BACK_EMOJI = "\u{1f519}";
+const END_EMOJI = "\u{1f6ab}";
 
 const INTERACTIONS = {};
 const emojiFromLetter = {}, letterFromEmoji = {};
@@ -52,10 +53,12 @@ for (var i=0; i<26; i++) {
     emojiFromLetter[String.fromCodePoint(65+i)] = String.fromCodePoint(firstLetterA+i);
 }
 emojiFromLetter["back"] = BACK_EMOJI;
+emojiFromLetter["end"] = END_EMOJI;
 for (i=0; i<26; i++) {
     letterFromEmoji[String.fromCodePoint(firstLetterA+i)] = String.fromCodePoint(65+i);
 }
 letterFromEmoji[BACK_EMOJI] = "back";
+letterFromEmoji[END_EMOJI] = "end";
 
 const firstUnused = (possibles, reactions) => {
     let l, i;
@@ -79,12 +82,12 @@ class Step {
     get summary() {
         return this._replace_vars_from_stage("summary");
     }
-    _replace_vars_from_stage(prop) {
+    _replace_vars_from_stage(prop, quote) {
         let text = STAGES[this.stage][prop];
         if (!text) return "";
         for (let k in this.stored) {
             let value = this.stored[k];
-            if (value.indexOf(" ") > -1) {
+            if (value.indexOf(" ") > -1 && quote) {
                 value = '"' + value + '"';
             }
             text = text.replace("{" + k + "}", value)
@@ -92,7 +95,7 @@ class Step {
         return text;
     }
     get avrae() {
-        return this._replace_vars_from_stage("avrae");
+        return this._replace_vars_from_stage("avrae", true);
     }
     get question() {
         let text = STAGES[this.stage].description;
@@ -114,6 +117,9 @@ class Step {
             reactions[letter] = new Step(next_stage, this.interaction, nextras);
         }
         reactions["back"] = "ignored";
+        if (Object.keys(reactions).length == 1) {
+            reactions["end"] = "ignored";
+        }
         return reactions;
     }
 
@@ -235,6 +241,12 @@ function handleReaction(reaction, user) {
     if (letter == "back") {
         // pop the last chain item
         interaction.chain.pop();
+        return interaction;
+    }
+
+    if (letter == "end") {
+        // remove all chain items, which will delete the whole interaction
+        interaction.chain = [];
         return interaction;
     }
 
