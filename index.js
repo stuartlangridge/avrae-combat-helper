@@ -1,17 +1,19 @@
+/* eslint no-console: "off" */
+
 const Discord = require("discord.js");
 const client = new Discord.Client();
 
 const {handleReaction, handleIncoming, emojiFromLetter} = require("./lib");
 
-const setReactions = async interaction => {
+const setReactions = async (interaction) => {
     await interaction.response_message.clearReactions();
-    let letters = Object.keys(interaction.reactions);
-    letters.sort();
-    for (let i=0; i<letters.length; i++) {
-        let letter = letters[i];
-        if (letter == "back") continue;
-        await interaction.response_message.react(emojiFromLetter[letter]);
+    let reactor = [];
+    for (let letter in interaction.reactions) {
+        if (letter != "back") {
+            reactor.push(interaction.response_message.react(emojiFromLetter[letter]));
+        }
     }
+    await Promise.all(reactor);
     if (interaction.reactions.back) {
         await interaction.response_message.react(emojiFromLetter["back"]);
     }

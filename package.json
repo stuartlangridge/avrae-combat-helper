@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --require spec-helper.js"
+    "test": "mocha --require spec-helper.js",
+    "lint": "eslint *.js"
   },
   "author": "",
   "license": "ISC",
@@ -12,6 +13,8 @@
     "discord.js": "^11.5.1"
   },
   "devDependencies": {
+    "eslint": "^6.1.0",
+    "eslint-plugin-mocha": "^6.0.0",
     "mocha": "^6.2.0"
   }
 }

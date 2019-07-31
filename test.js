@@ -1,3 +1,6 @@
+/* eslint-env node, mocha */
+/* eslint prefer-arrow-callback: "off", max-lines-per-function: "off", prefer-reflect: "off", arrow-body-style: 0 */
+
 const {handleReaction, handleIncoming, INTERACTIONS} = require("./lib");
 let {STAGES, LISTS} = require("./lib");
 const assert = require('assert');
@@ -32,23 +35,26 @@ LISTS.targetlist = function() {
 
 
 const BACK_EMOJI = "\u{1f519}";
+
+/*
 const AVRAE_PINNED_MESSAGE = "```" +
 `Current initiative: 9 (round 2)
 ===============================
   12: Katar <8/8 HP> (AC 13)
-  10: Minotaur <Injured> 
+  10: Minotaur <Injured>
 #  9: Stead Turalo <12/12 HP> (AC 14)
    8: Charic <10/10 HP> (AC 14)
    4: Rootz <10/10 HP> (AC 16)
    2: Arjshedinn <12/12 HP> (AC 18)` +
 "```"
+*/
 
-const incomingMessage = { id: 1, author: { id: 1} }
+const incomingMessage = {id: 1, author: {id: 1}}
 let i;
 const makeReaction = (emoji_letter) => {
     return {
         message: INTERACTIONS[Object.keys(INTERACTIONS)[0]].response_message,
-        emoji: { toString: () => { return emoji_letter; } }
+        emoji: {toString: () => { return emoji_letter; }}
     }
 }
 
@@ -58,7 +64,7 @@ describe("Creating a new Interaction", function() {
             delete INTERACTIONS[k];
         }
         i = await handleIncoming(incomingMessage);
-        i.response_message = {id: 888, author: { id: 2}};
+        i.response_message = {id: 888, author: {id: 2}};
     });
 
     describe("before any reactions are chosen", function() {
@@ -155,10 +161,12 @@ describe("Creating a new Interaction", function() {
             assert.equal(i.question, "Copy and paste the command below");
             assert.equal(i.summary, "Melee attack with dagger on Minotaur");
             assert.equal(i.avrae, '!init attack "Minotaur" "dagger"');
-            assert.equal(i.full_message, 
+            assert.equal(
+                i.full_message,
                 '__Melee attack with dagger on Minotaur__\n' +
                 'Copy and paste the command below\n' +
-                '`!init attack "Minotaur" "dagger"`')
+                '`!init attack "Minotaur" "dagger"`'
+            )
         });
     });
 
@@ -199,4 +207,3 @@ describe("Creating a new Interaction", function() {
         });
     });
 });
-

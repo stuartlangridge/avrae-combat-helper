@@ -38,7 +38,7 @@ for (var i=0; i<26; i++) {
     emojiFromLetter[String.fromCodePoint(65+i)] = String.fromCodePoint(firstLetterA+i);
 }
 emojiFromLetter["back"] = BACK_EMOJI;
-for (var i=0; i<26; i++) {
+for (i=0; i<26; i++) {
     letterFromEmoji[String.fromCodePoint(firstLetterA+i)] = String.fromCodePoint(65+i);
 }
 letterFromEmoji[BACK_EMOJI] = "back";
@@ -108,7 +108,7 @@ class Step {
             }
         }
 
-        text = text.replace(/\[(.*?)\]/g, (match, content, offset, string) => {
+        text = text.replace(/\[(.*?)\]/g, (match, content) => {
             let out = ["**", content, "**"];
             let upper = content.replace(/[^a-z]/ig, "").toUpperCase();
             let letter;
@@ -211,4 +211,4 @@ function handleReaction(reaction, user) {
     return interaction;
 }
 
-module.exports = { handleIncoming, handleReaction, INTERACTIONS, emojiFromLetter, STAGES, LISTS };
+module.exports = {handleIncoming, handleReaction, INTERACTIONS, emojiFromLetter, STAGES, LISTS};
