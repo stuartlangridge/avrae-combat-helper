@@ -2,7 +2,7 @@
 /* eslint prefer-arrow-callback: "off", max-lines-per-function: "off", prefer-reflect: "off", arrow-body-style: 0 */
 
 const {handleReaction, handleIncoming, INTERACTIONS} = require("./lib");
-let {STAGES, LISTS} = require("./lib");
+let {STAGES} = require("./lib");
 const assert = require('assert');
 
 /* Override STAGES and LISTS for testing */
@@ -25,12 +25,6 @@ STAGES.melee_weapon_target = {
     description: "Copy and paste the command below",
     summary: "Melee attack with {weapon} on {target}",
     avrae: '!init attack "{target}" "{weapon}"'
-};
-LISTS.attacklist = function() {
-    return "[sword], [dagger], [dirk]";
-};
-LISTS.targetlist = function() {
-    return "[Minotaur], [ifrit]"
 };
 
 
@@ -63,7 +57,11 @@ describe("Creating a new Interaction", function() {
         for (const k in INTERACTIONS) {
             delete INTERACTIONS[k];
         }
-        i = await handleIncoming(incomingMessage);
+        i = await handleIncoming(incomingMessage, {
+            attacks: ["sword", "dagger", "dirk"],
+            spells: [],
+            targets: ["Minotaur", "ifrit"]
+        });
         i.response_message = {id: 888, author: {id: 2}};
     });
 

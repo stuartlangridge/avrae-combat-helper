@@ -3,13 +3,13 @@ let STAGES = {
         description: "Make an attack ([melee] or [opportunity]) or cast a spell (at a [target] or as a [reaction])"
     },
     melee: {
-        description: "Choose weapon [sword] [dagger] [dirk]",
+        description: "Choose weapon {attacklist}",
         summary: "Melee attack",
         next_stage: "melee_weapon",
         store_as: "weapon"
     },
     melee_weapon: {
-        description: "Choose target [Minotaur] [ifrit]",
+        description: "Choose target {targetlist}",
         summary: "Melee attack with {weapon}",
         next_stage: "melee_weapon_target",
         store_as: "target"
@@ -21,15 +21,6 @@ let STAGES = {
     }
 }
 const BACK_EMOJI = "\u{1f519}";
-
-const LISTS = {
-    attacklist: function() {
-        return "[sword], [dagger], [dirk]";
-    },
-    targetlist: function() {
-        return "[Minotaur], [ifrit]"
-    }
-}
 
 const INTERACTIONS = {};
 const emojiFromLetter = {}, letterFromEmoji = {};
@@ -57,9 +48,10 @@ const firstUnused = (possibles, reactions) => {
 }
 
 class Step {
-    constructor(stage, store={}) {
+    constructor(stage, interaction, store={}) {
         this.stage = stage;
         this.stored = store;
+        this.interaction = interaction;
     }
     get summary() {
         return this._replace_vars_from_stage("summary");
@@ -92,7 +84,7 @@ class Step {
             }
             let nextras = Object.assign({}, this.stored);
             nextras = Object.assign(nextras, extras);
-            reactions[letter] = new Step(next_stage, nextras);
+            reactions[letter] = new Step(next_stage, this.interaction, nextras);
         }
         reactions["back"] = "ignored";
         return reactions;
@@ -102,11 +94,12 @@ class Step {
         let reactions = {};
 
         // replace lists
-        for (let listname in LISTS) {
-            if (text.indexOf("{" + listname + "}") != -1) {
-                text = text.replace("{" + listname + "}", LISTS[listname]());
+        this.interaction.listnames.forEach((listname) => {
+            let bracketed = "{" + listname + "}";
+            if (text.indexOf(bracketed) != -1) {
+                text = text.replace(bracketed, this.interaction[listname]);
             }
-        }
+        })
 
         text = text.replace(/\[(.*?)\]/g, (match, content) => {
             let out = ["**", content, "**"];
@@ -137,10 +130,23 @@ class Step {
 }
 
 class Interaction {
-    constructor(message) {
-        this.chain = [new Step("start")];
+    constructor(message, characterDetails) {
+        this.chain = [new Step("start", this)];
         this._invoking_message = message;
         this._response_message = null;
+        this.characterDetails = characterDetails;
+    }
+    get spelllist() {
+        return this.characterDetails.spells.map((s) => `[${s}]`).join(", ");
+    }
+    get attacklist() {
+        return this.characterDetails.attacks.map((s) => `[${s}]`).join(", ");
+    }
+    get targetlist() {
+        return this.characterDetails.targets.map((s) => `[${s}]`).join(", ");
+    }
+    get listnames() {
+        return ["spelllist", "attacklist", "targetlist"];
     }
     get full_message() {
         let s = this.summary;
@@ -172,8 +178,8 @@ class Interaction {
     get response_message() { return this._response_message; }
 }
 
-function handleIncoming(message) {
-    return new Interaction(message);
+function handleIncoming(message, characterDetails) {
+    return new Interaction(message, characterDetails);
 }
 function handleReaction(reaction, user) {
     const interaction = INTERACTIONS[reaction.message.id];
@@ -211,4 +217,4 @@ function handleReaction(reaction, user) {
     return interaction;
 }
 
-module.exports = {handleIncoming, handleReaction, INTERACTIONS, emojiFromLetter, STAGES, LISTS};
+module.exports = {handleIncoming, handleReaction, INTERACTIONS, emojiFromLetter, STAGES};

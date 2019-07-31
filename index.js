@@ -4,6 +4,23 @@ const Discord = require("discord.js");
 const client = new Discord.Client();
 
 const {handleReaction, handleIncoming, emojiFromLetter} = require("./lib");
+const {getUserDetails} = require("./server");
+const tokens = require("./token");
+
+/* We get the list of targets by looking in the pinned messages for an Avrae battle one */
+const fetchTargets = async (channel) => {
+    let pins = await channel.fetchPinnedMessages();
+    let targets = [];
+    pins.forEach((msg) => {
+        if (msg.content.indexOf("Current initiative: ") > -1) {
+            msg.content.split("\n").forEach((l) => {
+                let m = l.match(/^#?\s*[0-9]+: (.*?)(<.*?>)?( \(.*?\))?\s*$/);
+                if (m) { targets.push(m[1].trim()); }
+            })
+        }
+    })
+    return targets;
+}
 
 const setReactions = async (interaction) => {
     await interaction.response_message.clearReactions();
@@ -21,13 +38,15 @@ const setReactions = async (interaction) => {
 
 client.on("ready", () => { console.log("startup!"); });
 client.on("message", async (message) => {
-    if (message.content.startsWith("ping") && !message.author.bot) {
-        // ok
-    } else {
+    if (message.author.bot) return;
+    if (!message.content.startsWith("avrae combat help")) return;
+    let characterDetails = await getUserDetails(message.author.id);
+    if (!characterDetails) {
+        console.log("Hit the timeout waiting for user details");
         return;
     }
-    let interaction = handleIncoming(message);
-    console.log("OK, send", interaction.full_message);
+    characterDetails.targets = await fetchTargets(message.channel);
+    let interaction = handleIncoming(message, characterDetails);
     interaction.response_message = await message.channel.send(interaction.full_message);
     await setReactions(interaction);
 });
@@ -50,5 +69,4 @@ client.on("messageReactionAdd", async (reaction, user) => {
 });
 
 console.log("logging in...");
-let token = require("./token");
-client.login(token);
+client.login(tokens.discord_bot);
