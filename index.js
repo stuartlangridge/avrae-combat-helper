@@ -4,14 +4,12 @@ const client = new Discord.Client();
 const {handleReaction, handleIncoming, emojiFromLetter} = require("./lib");
 
 const setReactions = async interaction => {
-    console.log("clearing reactions");
     await interaction.response_message.clearReactions();
     let letters = Object.keys(interaction.reactions);
     letters.sort();
     for (let i=0; i<letters.length; i++) {
         let letter = letters[i];
         if (letter == "back") continue;
-        console.log("adding reaction", emojiFromLetter[letter]);
         await interaction.response_message.react(emojiFromLetter[letter]);
     }
     if (interaction.reactions.back) {
