@@ -10,9 +10,9 @@ const DISCORD_TOKENS = {};
 
 let redirect_url;
 if (process.env.DATABASE_URL) {
-    redirect_url = encodeURIComponent("https://avrae-combat-helper.herokuapp.com")
+    redirect_url = "https://avrae-combat-helper.herokuapp.com"
 } else {
-    redirect_url = encodeURIComponent("http://localhost:41174")
+    redirect_url = "http://localhost:41174"
 }
 
 
@@ -171,7 +171,7 @@ const getDiscordTokenRepeatedly = async (userid, notifyUserCallback, first) => {
         let noturl = "https://discordapp.com/api/oauth2/authorize?client_id=" + 
             tokens.discord_client_id + 
             "&redirect_uri=" +
-            redirect_url +
+            encodeURIComponent(redirect_url) +
             "&response_type=code&scope=identify";
         notifyUserCallback(userid, noturl);
     }
