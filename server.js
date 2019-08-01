@@ -97,7 +97,6 @@ const setDiscordToken = (userid, details) => {
     return new Promise((resolve, reject) => {
         pgcon.query('insert into ach_users (discord_id, details) values ($1, $2);', [userid, details], (err, res) => {
             if (err) { return reject(err); }
-            console.log("inserted OK!", res);
             resolve();
         });
     })
@@ -111,7 +110,6 @@ const gotDiscordCode = async (code, userRegisteredCallback) => {
         console.log("failed to get token with error", token_details);
         return;
     }
-    console.log("got token", token_details);
     let expires_at = new Date().getTime() + (token_details.expires_in * 1000);
     // now look up the user
     let user_details = await queryDiscordMe(token_details.access_token);
@@ -119,7 +117,6 @@ const gotDiscordCode = async (code, userRegisteredCallback) => {
         console.log("bad response from discord", user_details);
         return;
     }
-    console.log("got back user_details", user_details);
     let details = {
         refresh_token: token_details.refresh_token,
         access_token: token_details.access_token,
