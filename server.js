@@ -13,15 +13,7 @@ const pgcon = new pg.Client({
     ssl: true
 })
 pgcon.connect();
-/*
-pgcon.query('SELECT table_schema,table_name FROM information_schema.tables;', (err, res) => {
-  if (err) throw err;
-  for (let row of res.rows) {
-    console.log(JSON.stringify(row));
-  }
-  pgcon.end();
-});
-*/
+
 pgcon.query('create table if not exists ach_users (discord_id varchar(100), details jsonb);', (err, res) => {
   if (err) throw err;
 });
@@ -114,6 +106,7 @@ const startServer = (userRegisteredCallback) => {
             let expires_at = new Date().getTime() + (token_details.expires_in * 1000);
             // now look up the user
             let user_details = await queryDiscordMe(token_details.access_token);
+            console.log("got back user_details", user_details);
             let details = {
                 refresh_token: token_details.refresh_token,
                 access_token: token_details.access_token,
