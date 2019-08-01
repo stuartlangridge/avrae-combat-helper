@@ -111,6 +111,7 @@ const gotDiscordCode = async (code, userRegisteredCallback) => {
         console.log("failed to get token with error", token_details);
         return;
     }
+    console.log("got token", token_details);
     let expires_at = new Date().getTime() + (token_details.expires_in * 1000);
     // now look up the user
     let user_details = await queryDiscordMe(token_details.access_token);
