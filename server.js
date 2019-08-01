@@ -97,29 +97,33 @@ const setDiscordToken = (userid, details) => {
     //DISCORD_TOKENS[userid] = details;
 }
 
+const gotDiscordCode = async (code, userRegisteredCallback) => {
+    let token_details = await exchangeCode(code);
+    console.log("got token details", token_details);
+    let expires_at = new Date().getTime() + (token_details.expires_in * 1000);
+    // now look up the user
+    let user_details = await queryDiscordMe(token_details.access_token);
+    if (user_details.code === 0) {
+        console.log("bad response from discord", user_details);
+        return;
+    }
+    console.log("got back user_details", user_details);
+    let details = {
+        refresh_token: token_details.refresh_token,
+        access_token: token_details.access_token,
+        expires_at: expires_at
+    }
+    details = Object.assign(details, user_details);
+    setDiscordToken(user_details.id, details)
+    userRegisteredCallback(user_details.id);
+}
+
 const startServer = (userRegisteredCallback) => {
     const server = http.createServer(async (request, response) => {
         let u = url.parse(request.url)
         if (u.query && u.query.startsWith("code=")) {
             let code = u.query.split("=")[1];
-            let token_details = await exchangeCode(code);
-            console.log("got token details", token_details);
-            let expires_at = new Date().getTime() + (token_details.expires_in * 1000);
-            // now look up the user
-            let user_details = await queryDiscordMe(token_details.access_token);
-            if (user_details.code === 0) {
-                console.log("bad response from discord", user_details);
-                break;
-            }
-            console.log("got back user_details", user_details);
-            let details = {
-                refresh_token: token_details.refresh_token,
-                access_token: token_details.access_token,
-                expires_at: expires_at
-            }
-            details = Object.assign(details, user_details);
-            setDiscordToken(user_details.id, details)
-            userRegisteredCallback(user_details.id);
+            gotDiscordCode(code, userRegisteredCallback);
         }
         response.end('Thank you for registering with Avrae Combat Help. You can close this tab now.');
     })
