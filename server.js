@@ -8,6 +8,14 @@ const pg = require("pg");
 const STOPPERS = {};
 const DISCORD_TOKENS = {};
 
+let redirect_url;
+if (process.env.DATABASE_URL) {
+    redirect_url = encodeURIComponent("https://avrae-combat-helper.herokuapp.com")
+} else {
+    redirect_url = encodeURIComponent("http://localhost:41174")
+}
+
+
 const pgcon = new pg.Client({
     connectionString: tokens.DATABASE_URL,
     ssl: true
@@ -26,7 +34,7 @@ const exchangeCode = function(code) {
                 client_secret: tokens.discord_client_secret,
                 code: code,
                 grant_type: "authorization_code",
-                redirect_uri: "http://localhost:41174",
+                redirect_uri: redirect_url,
                 scope: "identify"
             }
         }, function(err, response, body) {
@@ -99,7 +107,10 @@ const setDiscordToken = (userid, details) => {
 
 const gotDiscordCode = async (code, userRegisteredCallback) => {
     let token_details = await exchangeCode(code);
-    console.log("got token details", token_details);
+    if (token_details.error) {
+        console.log("failed to get token with error", token_details);
+        return;
+    }
     let expires_at = new Date().getTime() + (token_details.expires_in * 1000);
     // now look up the user
     let user_details = await queryDiscordMe(token_details.access_token);
@@ -156,16 +167,10 @@ const getDiscordTokenRepeatedly = async (userid, notifyUserCallback, first) => {
 
     // now prompt the user to click the link
     if (first) {
-        let ru;
-        if (process.env.DATABASE_URL) {
-            ru = encodeURIComponent("https://avrae-combat-helper.herokuapp.com")
-        } else {
-            ru = encodeURIComponent("http://localhost:41174")
-        }
         let noturl = "https://discordapp.com/api/oauth2/authorize?client_id=" + 
             tokens.discord_client_id + 
             "&redirect_uri=" +
-            ru +
+            redirect_url +
             "&response_type=code&scope=identify";
         notifyUserCallback(userid, noturl);
     }
