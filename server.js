@@ -134,7 +134,14 @@ const startServer = (userRegisteredCallback) => {
             let code = u.query.split("=")[1];
             gotDiscordCode(code, userRegisteredCallback);
         }
-        response.end('Thank you for registering with Avrae Combat Help. You can close this tab now.');
+        response.end(`<!doctype html><html><head><style>body {background: #282b30;}
+article {
+  background: #35383c; width: 500px; height: 200px; border-radius: 5px; color: white;
+  padding: 1em; box-sizing: border-box; text-align: center; font-size: 30px;
+  font-family: Whitney,Helvetica Neue,Helvetica,Arial,sans-serif;
+  position: absolute; top: 50%; left: 50%; margin-left: -250px; margin-top: -100px;
+}</style></head><body><article>Thank you for registering with Avrae Combat Help.
+You can close this tab now.</article>`);
     })
     const port = process.env.PORT || 41174;
     server.listen(port, (err) => {
