@@ -3,9 +3,28 @@ const http = require("http");
 const url = require('url');
 const request_lib = require("request");
 const tokens = require("./token");
+const pg = require("pg");
 
 const STOPPERS = {};
 const DISCORD_TOKENS = {};
+
+const pgcon = new pg.Client({
+    connectionString: tokens.DATABASE_URL,
+    ssl: true
+})
+pgcon.connect();
+/*
+pgcon.query('SELECT table_schema,table_name FROM information_schema.tables;', (err, res) => {
+  if (err) throw err;
+  for (let row of res.rows) {
+    console.log(JSON.stringify(row));
+  }
+  pgcon.end();
+});
+*/
+pgcon.query('create table if not exists ach_users (discord_id varchar(100), details jsonb);', (err, res) => {
+  if (err) throw err;
+});
 
 const exchangeCode = function(code) {
     return new Promise((resolve, reject) => {
@@ -74,8 +93,16 @@ const getAvrae = (token) => {
     });
 }
 
-const setDiscordToken = async (userid, details) => {
-    DISCORD_TOKENS[userid] = details;
+const setDiscordToken = (userid, details) => {
+    return new Promise((resolve, reject) => {
+        pgcon.query('insert into ach_users (discord_id, details) values ($1, $2);', [userid, details], (err, res) => {
+            if (err) { return reject(err); }
+            console.log("inserted OK!", res);
+            resolve();
+        });
+    })
+
+    //DISCORD_TOKENS[userid] = details;
 }
 
 const startServer = (userRegisteredCallback) => {
@@ -98,14 +125,25 @@ const startServer = (userRegisteredCallback) => {
         }
         response.end('Thank you for registering with Avrae Combat Help. You can close this tab now.');
     })
-    server.listen(41174, (err) => {
+    const port = process.env.PORT || 41174;
+    server.listen(port, (err) => {
         if (err) { console.log('something bad happened', err); return; }
-        console.log("server is listening");
+        console.log(`server is listening on ${port}`);
     })
 }
 
 const reallyGetDiscordToken = async (userid) => {
-    return DISCORD_TOKENS[userid] ? DISCORD_TOKENS[userid].access_token : null
+    return new Promise((resolve, reject) => {
+        pgcon.query('select details from ach_users where discord_id = $1;', [userid], (err, res) => {
+            if (err) { return reject(err); }
+            if (res.rows.length === 0) {
+                console.log("no rows back from query");
+                return resolve(null);
+            }
+            return resolve(res.rows[0].details.access_token)
+        });
+    })
+    //return DISCORD_TOKENS[userid] ? DISCORD_TOKENS[userid].access_token : null
 }
 
 const getDiscordTokenRepeatedly = async (userid, notifyUserCallback, first) => {
@@ -116,7 +154,18 @@ const getDiscordTokenRepeatedly = async (userid, notifyUserCallback, first) => {
 
     // now prompt the user to click the link
     if (first) {
-        notifyUserCallback(userid, "https://discordapp.com/api/oauth2/authorize?client_id=605711472152281098&redirect_uri=http%3A%2F%2Flocalhost%3A41174&response_type=code&scope=identify");
+        let ru;
+        if (process.env.DATABASE_URL) {
+            ru = encodeURIComponent("https://avrae-combat-helper.herokuapp.com")
+        } else {
+            ru = encodeURIComponent("http://localhost:41174")
+        }
+        let noturl = "https://discordapp.com/api/oauth2/authorize?client_id=" + 
+            tokens.discord_client_id + 
+            "&redirect_uri=" +
+            ru +
+            "&response_type=code&scope=identify";
+        notifyUserCallback(userid, noturl);
     }
 
     await new Promise((resolve) => { setTimeout(resolve, 1000); })
