@@ -103,9 +103,14 @@ const startServer = (userRegisteredCallback) => {
         if (u.query && u.query.startsWith("code=")) {
             let code = u.query.split("=")[1];
             let token_details = await exchangeCode(code);
+            console.log("got token details", token_details);
             let expires_at = new Date().getTime() + (token_details.expires_in * 1000);
             // now look up the user
             let user_details = await queryDiscordMe(token_details.access_token);
+            if (user_details.code === 0) {
+                console.log("bad response from discord", user_details);
+                break;
+            }
             console.log("got back user_details", user_details);
             let details = {
                 refresh_token: token_details.refresh_token,
